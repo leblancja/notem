@@ -18,7 +18,7 @@ create_default_config() {
 
     cat > "$config_file" << EOF
 # Notem configuration file
-# Created on $(date -u "+%Y-%m-%d %H:%M:S") UTC
+# Created on $(date -u "+%Y-%m-%d %H:%M:S")
 # Change these values to alter the default behavior of notem
 
 # Root directory for all notes
@@ -62,7 +62,7 @@ load_config() {
                 REGULAR_NOTES_DIR)
                     REGULAR_NOTES_DIR="${value}"
                     ;;
-                TEMLATES_DIR)
+                TEMpLATES_DIR)
                     TEMPLATES_DIR="${value}"
                     ;;
             esac
@@ -76,6 +76,15 @@ REGULAR_NOTES_DIR="${REGULAR_NOTES_DIR:-$NOTES_ROOT}"
 DAILY_MODE=false
 TEMPLATE_NAME=""
 NOTE_NAME=""
+
+CURRENT_TIME=$(date "+%Y-%m-%d %H:%M:%S")
+CURRENT_TIMEZONE=$(date "+%z")
+TODAY=$(date +"%Y-%m-%d")
+YEAR=$(date +"%Y")MONTH=$(date +"%m")
+DAY=$(date +"%d")
+HMS=$(date +"%H:%M:%S")
+
+CURRENT_USER=$(USER)
 
 
 if [ ! -d "${NOTES_ROOT}" ]; then
@@ -115,14 +124,10 @@ while getopts "dt:n:" opt; do
 done
 
 if [ "${DAILY_MODE}" = true ]; then
-    TODAY=$(date +"%Y-%m-%d")
 
-    YEAR=$(date +"%Y")
-    MONTH=$(date +"%m")
-    DAY=$(date +"%d")
 
-    FILE_PATH="${NOTES_ROOT}/daily/${YEAR}/${MONTH}/${DAY}/${TODAY}.md"
-    if !  mkdir -p "${NOTES_ROOT}/daily/${YEAR}/${MONTH}/${DAY}"; then
+    FILE_PATH="${NOTES_ROOT}/daily/${YEAR}/${MONTH}/daily-${TODAY}.md"
+    if !  mkdir -p "${NOTES_ROOT}/daily/${YEAR}/${MONTH}"; then
         echo "Error: Failed to create directory structure" >&2
         exit 1
     fi
@@ -145,24 +150,30 @@ TEMPLATE_PATH="${TEMPLATES_DIR}/${TEMPLATE_NAME}.md"
 
 
 if [ ! -f "${FILE_PATH}" ]; then
-    if [ -f "${TEMPLATE_PATH}" ]; then
-        sed -e "s/{{date}}/$(date -u "+%Y-%m-%d %H:%M:%S")/" \
-            -e "s/{{author}}/${USER}/" \
-            -e "s/{{year}}/$(date +"%Y")/" \
-            -e "s/{{month}}/$(date +"%m")/" \
-            -e "s/{{day}}/$(date +"%d")/" \
+
+	if [ -n "${TEMPLATE_NAME}"]; then
+		if [ ! -f "${TEMPLATE_PATH}}"]; then
+			echo "Error: Template '${TEMPLATE_NAME}' not found at '${TEMPLATE_PATH}'" >&2
+			echo "Available templates in ${TEMPLATES_DIR}:" >&2
+			ls -1 "${TEMPLATES_DIR}"/*.md 2>/dev/null || echo "No templates found" >&2
+			exit 1
+		fi
+	elif [ -f "${TEMPLATE_PATH}" ]; then
+        sed -e "s/{{date}}/${TODAY}/" \
+            -e "s/{{author}}/${CURRENT_USER}/" \
+            -e "s/{{year}}/${YEAR}/" \
+            -e "s/{{month}}/${MONTH}/" \
+            -e "s/{{day}}/${DAY}/" \
             -e "s/{{weekday}}/$(date +"%A")/" \
             "${TEMPLATE_PATH}" > "${FILE_PATH}"
     else
-        if [ "${DAILY_MODE}" = true ] || [ -n "${TEMPLATE_PATH}" ]; then
-            echo "---" > "${FILE_PATH}"
-            echo "date: $(date -u "+%Y-%m-%d %H:%M:%S")" >> "${FILE_PATH}"
-            echo "author: ${USER}" >> "${FILE_PATH}"
-            echo "---" >> "${FILE_PATH}"
-            echo "" >> "${FILE_PATH}"
-        else
-            touch "${FILE_PATH}"
-        fi
+        echo "---" > "${FILE_PATH}"
+        echo "date: ${CURRENT_TIME}" >> "${FILE_PATH}"
+        echo "timezone: ${CURRENT_TIMEZONE}" >> "${FILE_PATH}"
+        echo "author: ${USER}" >> "${FILE_PATH}"
+        echo "---" >> "${FILE_PATH}"
+        echo "" >> "${FILE_PATH}"
+        touch "${FILE_PATH}"
     fi
 fi
 
