@@ -18,7 +18,7 @@ create_default_config() {
 
     cat > "$config_file" << EOF
 # Notem configuration file
-# Created on $(date -u "+%Y-%m-%d %H:%M:S")
+# Created on $(date -u "+%Y-%m-%d %H:%M:S") UTC
 # Change these values to alter the default behavior of notem
 
 # Root directory for all notes
@@ -177,4 +177,4 @@ if [ ! -f "${FILE_PATH}" ]; then
     fi
 fi
 
-vim "${FILE_PATH}"
+"${EDITOR}" "${FILE_PATH}"
