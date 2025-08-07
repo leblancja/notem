@@ -84,7 +84,7 @@ YEAR=$(date +"%Y")MONTH=$(date +"%m")
 DAY=$(date +"%d")
 HMS=$(date +"%H:%M:%S")
 
-CURRENT_USER=$(USER)
+CURRENT_USER=$USER
 
 
 if [ ! -d "${NOTES_ROOT}" ]; then
