@@ -4,9 +4,6 @@ set -euo pipefail
 CONFIG_FILE="${XDG_CONFIG_HOME:-$HOME/.config}/notem/config"
 DEFAULT_CONFIG_FILE="${HOME}/.notemrc"
 
-NOTES_ROOT="${NOTES_ROOT:-$HOME/notes}"
-REGULAR_NOTES_DIR=""
-TEMPLATES_DIR="${TEMPLATES_DIR:-$HOME/.templates}"
 
 
 create_default_config() {
@@ -50,7 +47,7 @@ load_config() {
     if [ -n "${config_file}" ]; then
         while IFS='=' read -r key value; do
             [[ "${key}" =~ ^[[:space:]]*# ]] && continue
-            [[ -z "{key}" ]] && continue
+            [[ -z "${key}" ]] && continue
 
             key=$(echo "${key}" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
             value=$(echo "${value}" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
@@ -62,7 +59,7 @@ load_config() {
                 REGULAR_NOTES_DIR)
                     REGULAR_NOTES_DIR="${value}"
                     ;;
-                TEMpLATES_DIR)
+                TEMPLATES_DIR)
                     TEMPLATES_DIR="${value}"
                     ;;
             esac
@@ -72,6 +69,8 @@ load_config() {
 
 load_config
 
+NOTES_ROOT="${NOTES_ROOT:-$HOME/notes}"
+TEMPLATES_DIR="${TEMPLATES_DIR:-$HOME/.templates}"
 REGULAR_NOTES_DIR="${REGULAR_NOTES_DIR:-$NOTES_ROOT}"
 DAILY_MODE=false
 TEMPLATE_NAME=""
@@ -80,12 +79,19 @@ NOTE_NAME=""
 CURRENT_TIME=$(date "+%Y-%m-%d %H:%M:%S")
 CURRENT_TIMEZONE=$(date "+%z")
 TODAY=$(date +"%Y-%m-%d")
-YEAR=$(date +"%Y")MONTH=$(date +"%m")
+YEAR=$(date +"%Y")
+MONTH=$(date +"%m")
 DAY=$(date +"%d")
+
 HMS=$(date +"%H:%M:%S")
+WEEKDAY=$(date +"%A")
 
 CURRENT_USER=$USER
 
+if ! mkdir -p "${NOTES_ROOT}"; then
+    echo "Error: failed to create directory structure ${NOTES_ROOT}" >&2
+    exit 1
+fi
 
 if [ ! -d "${NOTES_ROOT}" ]; then
     echo "Error: NOTES_ROOT directory (${NOTES_ROOT}) does not exist" >&2
@@ -151,21 +157,22 @@ TEMPLATE_PATH="${TEMPLATES_DIR}/${TEMPLATE_NAME}.md"
 
 if [ ! -f "${FILE_PATH}" ]; then
 
-	if [ -n "${TEMPLATE_NAME}"]; then
-		if [ ! -f "${TEMPLATE_PATH}"]; then
+	if [ -n "${TEMPLATE_NAME}" ]; then
+		if [ ! -f "${TEMPLATE_PATH}" ]; then
 			echo "Error: Template '${TEMPLATE_NAME}' not found at '${TEMPLATE_PATH}'" >&2
 			echo "Available templates in ${TEMPLATES_DIR}:" >&2
 			ls -1 "${TEMPLATES_DIR}"/*.md 2>/dev/null || echo "No templates found" >&2
 			exit 1
-		fi
-	elif [ -f "${TEMPLATE_PATH}" ]; then
-        sed -e "s/{{date}}/${TODAY}/" \
-            -e "s/{{author}}/${CURRENT_USER}/" \
-            -e "s/{{year}}/${YEAR}/" \
-            -e "s/{{month}}/${MONTH}/" \
-            -e "s/{{day}}/${DAY}/" \
-            -e "s/{{weekday}}/$(date +"%A")/" \
-            "${TEMPLATE_PATH}" > "${FILE_PATH}"
+		
+	    elif [ -f "${TEMPLATE_PATH}" ]; then
+            sed -e "s/{{date}}/${TODAY}/" \
+                -e "s/{{author}}/${CURRENT_USER}/" \
+                -e "s/{{year}}/${YEAR}/" \
+                -e "s/{{month}}/${MONTH}/" \
+                -e "s/{{day}}/${DAY}/" \
+                -e "s/{{weekday}}/${WEEKDAY}/" \
+                "${TEMPLATE_PATH}" > "${FILE_PATH}"
+        fi
     else
         echo "---" > "${FILE_PATH}"
         echo "date: ${CURRENT_TIME}" >> "${FILE_PATH}"
@@ -173,8 +180,7 @@ if [ ! -f "${FILE_PATH}" ]; then
         echo "author: ${USER}" >> "${FILE_PATH}"
         echo "---" >> "${FILE_PATH}"
         echo "" >> "${FILE_PATH}"
-        touch "${FILE_PATH}"
     fi
 fi
 
-"${EDITOR}" "${FILE_PATH}"
+vim "${FILE_PATH}"
