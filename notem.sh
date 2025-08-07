@@ -152,7 +152,7 @@ TEMPLATE_PATH="${TEMPLATES_DIR}/${TEMPLATE_NAME}.md"
 if [ ! -f "${FILE_PATH}" ]; then
 
 	if [ -n "${TEMPLATE_NAME}"]; then
-		if [ ! -f "${TEMPLATE_PATH}}"]; then
+		if [ ! -f "${TEMPLATE_PATH}"]; then
 			echo "Error: Template '${TEMPLATE_NAME}' not found at '${TEMPLATE_PATH}'" >&2
 			echo "Available templates in ${TEMPLATES_DIR}:" >&2
 			ls -1 "${TEMPLATES_DIR}"/*.md 2>/dev/null || echo "No templates found" >&2
