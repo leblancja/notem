@@ -3,7 +3,7 @@
 This is just a shell script. 
 Download it, make it executable (chmod +x).
 
-Running it for the first time will create a config file in ~/.notemrc. Optionally you can create $XDG_CONFIG_HOME/notem/config
+Running it for the first time will create a config file in ~/.notemrc. Optionally you can create $XDG_CONFIG_HOME/notem/config  
 The script checks $XDG_CONFIG_HOME first.
 
 Here are some optional flags:
