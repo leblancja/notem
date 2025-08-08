@@ -4,8 +4,6 @@ set -euo pipefail
 CONFIG_FILE="${XDG_CONFIG_HOME:-$HOME/.config}/notem/config"
 DEFAULT_CONFIG_FILE="${HOME}/.notemrc"
 
-
-
 create_default_config() {
     local config_file="$1"
     local config_dir
@@ -23,7 +21,7 @@ NOTES_ROOT=${HOME}/notes
 
 # Directory for newly created (non-daily) notes
 # If not set, defaults to NOTES_ROOT
-REGULAR_NOTES_DIR=${NOTES_ROOT}
+#REGULAR_NOTES_DIR=
 
 # Directory containing note templates
 TEMPLATES_DIR=${HOME}/.templates
@@ -71,7 +69,7 @@ load_config
 
 NOTES_ROOT="${NOTES_ROOT:-$HOME/notes}"
 TEMPLATES_DIR="${TEMPLATES_DIR:-$HOME/.templates}"
-REGULAR_NOTES_DIR="${REGULAR_NOTES_DIR:-$NOTES_ROOT}"
+REGULAR_NOTES_DIR=""
 DAILY_MODE=false
 TEMPLATE_NAME=""
 NOTE_NAME=""
@@ -106,7 +104,6 @@ usage() {
     exit 1
 }
 
-
 while getopts "dt:n:" opt; do
     case "${opt}" in
         d)
@@ -131,7 +128,6 @@ done
 
 if [ "${DAILY_MODE}" = true ]; then
 
-
     FILE_PATH="${NOTES_ROOT}/daily/${YEAR}/${MONTH}/daily-${TODAY}.md"
     if !  mkdir -p "${NOTES_ROOT}/daily/${YEAR}/${MONTH}"; then
         echo "Error: Failed to create directory structure" >&2
@@ -142,18 +138,21 @@ else
         NOTE_NAME="note-$(date +"%Y%m%d-%H%M%S")"
     fi
 
-
     [[ "${NOTE_NAME}" != *.md  ]] && NOTE_NAME="${NOTE_NAME}.md"
 
-    FILE_PATH="${REGULAR_NOTES_DIR}/${NOTE_NAME}"
-    if ! mkdir -p "${REGULAR_NOTES_DIR}"; then
-        echo "Error: Failed to create directory structure" >&2
-        exit 1
-    fi
+	if [ -z "${REGULAR_NOTES_DIR}" ]; then
+		FILE_PATH="${NOTES_ROOT}/${NOTE_NAME}"
+	else
+
+    	FILE_PATH="${NOTES_ROOT}/${REGULAR_NOTES_DIR}/${NOTE_NAME}"
+    	if ! mkdir -p "${REGULAR_NOTES_DIR}"; then
+        	echo "Error: Failed to create directory structure" >&2
+        	exit 1
+    	fi
+	fi
 fi
 
 TEMPLATE_PATH="${TEMPLATES_DIR}/${TEMPLATE_NAME}.md"
-
 
 if [ ! -f "${FILE_PATH}" ]; then
 
