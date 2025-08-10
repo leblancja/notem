@@ -25,6 +25,8 @@ NOTES_ROOT=${HOME}/notes
 
 # Directory containing note templates
 TEMPLATES_DIR=${HOME}/.templates
+
+# Set your desired text editor (overrides $EDITOR env variable)
 EOF
 
     echo "Created default configuration file at: $config_file"
@@ -60,6 +62,9 @@ load_config() {
                 TEMPLATES_DIR)
                     TEMPLATES_DIR="${value}"
                     ;;
+                EDITOR)
+                    CONF_EDITOR="${value}"
+                    ;;
             esac
         done < "${config_file}"
     fi
@@ -69,10 +74,12 @@ load_config
 
 NOTES_ROOT="${NOTES_ROOT:-$HOME/notes}"
 TEMPLATES_DIR="${TEMPLATES_DIR:-$HOME/.templates}"
-REGULAR_NOTES_DIR=""
+REGULAR_NOTES_DIR="${REGULAR_NOTES_DIR:-""}"
+CONF_EDITOR="${CONF_EDITOR:-""}"
 DAILY_MODE=false
 TEMPLATE_NAME=""
 NOTE_NAME=""
+OPTIONAL_LOCATION=""
 
 CURRENT_TIME=$(date "+%Y-%m-%d %H:%M:%S")
 CURRENT_TIMEZONE=$(date "+%z")
@@ -85,6 +92,7 @@ HMS=$(date +"%H:%M:%S")
 WEEKDAY=$(date +"%A")
 
 CURRENT_USER=$USER
+ENV_EDITOR=$EDITOR
 
 if ! mkdir -p "${NOTES_ROOT}"; then
     echo "Error: failed to create directory structure ${NOTES_ROOT}" >&2
@@ -104,7 +112,7 @@ usage() {
     exit 1
 }
 
-while getopts "dt:n:" opt; do
+while getopts "dt:n:l:" opt; do
     case "${opt}" in
         d)
             DAILY_MODE=true
@@ -115,8 +123,11 @@ while getopts "dt:n:" opt; do
         n)
             NOTE_NAME="${OPTARG}"
             ;;
+        l)
+            OPTIONAL_LOCATION="${OPTARG}"
+            ;;
         \?)
-            echo "Invalid option: -${OPTARG}" >&2
+            echo "Invalid option: -${opt}" >&2
             usage
             ;;
         :)
@@ -139,17 +150,22 @@ else
     fi
 
     [[ "${NOTE_NAME}" != *.md  ]] && NOTE_NAME="${NOTE_NAME}.md"
+    
+    if [ -z "${OPTIONAL_LOCATION}" ]; then
+        if [ -z "${REGULAR_NOTES_DIR}" ]; then
+            FILE_PATH="${NOTES_ROOT}/${NOTE_NAME}"
+        else
 
-	if [ -z "${REGULAR_NOTES_DIR}" ]; then
-		FILE_PATH="${NOTES_ROOT}/${NOTE_NAME}"
-	else
+            FILE_PATH="${NOTES_ROOT}/${REGULAR_NOTES_DIR}/${NOTE_NAME}"
+            if ! mkdir -p "${REGULAR_NOTES_DIR}"; then
+                echo "Error: Failed to create directory structure" >&2
+                exit 1
+            fi
+        fi
+    else
+       FILE_PATH="${OPTIONAL_LOCATION}/${NOTE_NAME}" 
+    fi
 
-    	FILE_PATH="${NOTES_ROOT}/${REGULAR_NOTES_DIR}/${NOTE_NAME}"
-    	if ! mkdir -p "${REGULAR_NOTES_DIR}"; then
-        	echo "Error: Failed to create directory structure" >&2
-        	exit 1
-    	fi
-	fi
 fi
 
 TEMPLATE_PATH="${TEMPLATES_DIR}/${TEMPLATE_NAME}.md"
@@ -182,4 +198,12 @@ if [ ! -f "${FILE_PATH}" ]; then
     fi
 fi
 
-vim "${FILE_PATH}"
+if [[ -z "${CONF_EDITOR}" ]]; then
+    if [[ -z "${ENV_EDITOR}" ]]; then
+        nano "${FILE_PATH}"
+    else
+        "${ENV_EDITOR}" "${FILE_PATH}"
+    fi
+else
+ "${CONF_EDITOR}" "${FILE_PATH}"
+fi
