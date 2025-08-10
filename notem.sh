@@ -20,8 +20,9 @@ create_default_config() {
 NOTES_ROOT=${HOME}/notes
 
 # Directory for newly created (non-daily) notes
+# Relative to NOTES_ROOT (ex: test = NOTES_ROOT/test)
 # If not set, defaults to NOTES_ROOT
-#REGULAR_NOTES_DIR=
+#REGULAR_NOTES_DIR=other
 
 # Directory containing note templates
 TEMPLATES_DIR=${HOME}/.templates
@@ -157,7 +158,7 @@ else
         else
 
             FILE_PATH="${NOTES_ROOT}/${REGULAR_NOTES_DIR}/${NOTE_NAME}"
-            if ! mkdir -p "${REGULAR_NOTES_DIR}"; then
+            if ! mkdir -p "${NOTES_ROOT}/${REGULAR_NOTES_DIR}"; then
                 echo "Error: Failed to create directory structure" >&2
                 exit 1
             fi
